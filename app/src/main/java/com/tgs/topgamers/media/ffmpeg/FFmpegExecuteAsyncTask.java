@@ -3,6 +3,7 @@ package com.tgs.topgamers.media.ffmpeg;
 import android.os.AsyncTask;
 import android.util.Log;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -17,6 +18,12 @@ public class FFmpegExecuteAsyncTask extends AsyncTask<Void, String, Integer> {
 
     FFmpegExecuteAsyncTask(List<String[]> cmds, OnFFmpegListener listener) {
         this.mCmds = cmds;
+        this.mListener = listener;
+    }
+
+    FFmpegExecuteAsyncTask(String[] cmd, OnFFmpegListener listener) {
+        mCmds = new ArrayList<>();
+        mCmds.add(cmd);
         this.mListener = listener;
     }
 
@@ -36,7 +43,9 @@ public class FFmpegExecuteAsyncTask extends AsyncTask<Void, String, Integer> {
             int ret = FFmpegHelper.run(mCmds.get(i));
             Log.i("FFmpegExecuteAsyncTask", "ret = " + ret);
             if (ret != 0) {
-                mListener.onFail(ret);
+                if (mListener != null) {
+                    mListener.onFail(ret);
+                }
                 return ret;
             }
         }
@@ -47,9 +56,13 @@ public class FFmpegExecuteAsyncTask extends AsyncTask<Void, String, Integer> {
     protected void onPostExecute(Integer result) {
         Log.i("FFmpegExecuteAsyncTask", "onPostExecute");
         if (result == 0) {
-            mListener.onSuccess();
+            if (mListener != null) {
+                mListener.onSuccess();
+            }
         } else {
-            mListener.onFail(result);
+            if (mListener != null) {
+                mListener.onFail(result);
+            }
         }
     }
 

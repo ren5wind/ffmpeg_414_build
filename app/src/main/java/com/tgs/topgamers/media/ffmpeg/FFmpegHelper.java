@@ -41,6 +41,75 @@ public class FFmpegHelper {
 
     private final String TAG = "FFmpegHelper";
 
+
+    public void cutAudio(String srcAudioPath, float startTimeS, float endTimeS, String desAudioPath) {
+        float durationS = endTimeS - startTimeS;
+        ArrayList<String> cmds = new ArrayList<>();
+        cmds.add("ffmpeg");
+        cmds.add("-ss");
+        cmds.add(String.valueOf(startTimeS));
+        cmds.add("-i");
+        cmds.add(srcAudioPath);
+        cmds.add("-t");
+        cmds.add(String.valueOf(durationS));
+        cmds.add("-y");
+        cmds.add(desAudioPath);
+    }
+
+    public void mixAudioByMute(List<MixAudioFileData> audioList, String desVideoPath, long durationMs, OnFFmpegListener listener) {
+        if (audioList != null && audioList.size() > 0) {
+            //按startTime排序
+            Collections.sort(audioList, new Comparator<MixAudioFileData>() {
+                @Override
+                public int compare(MixAudioFileData o1, MixAudioFileData o2) {
+                    if (o1.getStartTimeMs() < o2.getStartTimeMs()) {
+                        return -1;
+                    } else if (o1.getStartTimeMs() == o2.getStartTimeMs()) {
+                        return 0;
+                    } else {
+                        return 1;
+                    }
+                }
+            });
+
+            MixAudioFileData lastDubbing = audioList.get(audioList.size() - 1);
+            long offDurationMs = durationMs - lastDubbing.getStartTimeMs() - lastDubbing.getDurationMs();
+            long frameCount = 44100 * offDurationMs / 1000;
+            int size = audioList.size();
+
+            ArrayList<String> cmds = new ArrayList<>();
+            cmds.add("ffmpeg");
+            for (int i = 0; i < size; i++) {
+                cmds.add("-i");
+                cmds.add(audioList.get(i).getFilePath());
+            }
+            cmds.add("-filter_complex");
+            String amix = "";
+            for (int i = 0; i < size; i++) {
+                long startTime = audioList.get(i).getStartTimeMs();
+                amix += "[" + i + ":a]adelay=" + startTime + "|" + startTime + ",volume=2.0[audio" + i + "],";
+            }
+            for (int i = 0; i < size; i++) {
+                amix += "[audio" + i + "]";
+            }
+            amix += "amix=inputs=" + size + ",apad=pad_len=" + frameCount;
+//            amix += "\'";
+            cmds.add(amix);
+            cmds.add("-y");
+            cmds.add(desVideoPath);
+
+            String[] commands = cmds.toArray(new String[cmds.size()]);
+            String test = "";
+            for (int i = 0; i < commands.length; i++) {
+                test += commands[i] + " ";
+            }
+            Log.i("VideoMixAudio", test);
+            mFFmpegExecuteAsyncTask = new FFmpegExecuteAsyncTask(commands, listener);
+            mFFmpegExecuteAsyncTask.execute();
+        }
+    }
+
+
     public void videoMixAudioChannels(MixAudioFileData srcVideo, String desVideoPath, List<MixAudioFileData> dubbingAudioList,
                                       float dubbingVolume, MixAudioFileData backgroundAudio, OnFFmpegListener listener) {
         String dubbingFilePath = Environment.getExternalStorageDirectory().getPath() + "/ATopGame/dubbingAudio.wav";
@@ -91,7 +160,7 @@ public class FFmpegHelper {
 //                [audio0][audio1]
                 amix += "[audio" + i + "]";
             }
-            amix += "amix=inputs="+size+",apad=pad_len=" + frameCount;
+            amix += "amix=inputs=" + size + ",apad=pad_len=" + frameCount;
 //            amix += "\'";
             cmds.add(amix);
             cmds.add("-y");
@@ -158,8 +227,8 @@ public class FFmpegHelper {
             inputs++;
         }
 //        amerge=inputs=2
-//        complex += "amix=inputs=" + inputs + ":duration=first:dropout_transition=2";
-        complex += "amerge=inputs=" + inputs;
+        complex += "amix=inputs=" + inputs + ":duration=first:dropout_transition=2";
+//        complex += "amerge=inputs=" + inputs;
         cmds.add(complex);
         cmds.add("-acodec");
         cmds.add("aac");
@@ -193,9 +262,57 @@ public class FFmpegHelper {
 //        -acodec aac -ab 64k -ar 44100 -vcodec copy
 //        -y "/Users/rxm/Desktop/test/insert_amix.mp4"
 
-        mFFmpegExecuteAsyncTask = new FFmpegExecuteAsyncTask(cmdList,listener);
+        mFFmpegExecuteAsyncTask = new FFmpegExecuteAsyncTask(cmdList, listener);
         mFFmpegExecuteAsyncTask.execute();
     }
+
+
+    /**
+     * 分离视频并填充静音帧
+     *
+     * @param inputPath
+     * @param outputPath
+     * @param listener
+     */
+    public void extractVideo(String inputPath, String outputPath, OnFFmpegListener listener) {
+        List<String[]> cmdList = new ArrayList<>();
+        String tempFilePath = Environment.getExternalStorageDirectory().getPath() + "/ATopGame/temp_extractVideo.mp4";
+
+        String[] cmd1 = {
+                "ffmpeg",
+                "-i",
+                inputPath,
+                "-vcodec",
+                "copy",
+                "-an",
+                "-y",
+                tempFilePath
+        };
+        cmdList.add(cmd1);
+
+//        ffmpeg -i path -f lavfi -i anullsrc=channel_layout=stereo:sample_rate=44100 -c:v copy -shortest -y path
+
+
+
+        String[] cmd2 = {
+                "ffmpeg",
+                "-i",
+                tempFilePath,
+                "-f",
+                "lavfi",
+                "-i",
+                "anullsrc=channel_layout=stereo:sample_rate=44100",
+                "-vcodec",
+                "copy",
+                "-shortest",
+                "-y",
+                outputPath
+        };
+        cmdList.add(cmd2);
+        mFFmpegExecuteAsyncTask = new FFmpegExecuteAsyncTask(cmdList, listener);
+        mFFmpegExecuteAsyncTask.execute();
+    }
+
 
     public native static int run(String[] commands);
 }

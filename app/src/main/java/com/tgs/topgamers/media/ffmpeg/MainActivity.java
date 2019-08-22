@@ -21,7 +21,7 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
 
-        test();
+        run();
     }
 
     private void test() {
@@ -29,7 +29,7 @@ public class MainActivity extends AppCompatActivity {
         MixAudioFileData backgroundAudio = new MixAudioFileData();
         String desPath = Environment.getExternalStorageDirectory().getPath() + "/final1.mp4";
         List<MixAudioFileData> dubbingList = new ArrayList<>();
-        src.setFilePath(Environment.getExternalStorageDirectory().getPath() + "/test11.mp4");
+        src.setFilePath(Environment.getExternalStorageDirectory().getPath() + "/test1.mp4");
         src.setVolume(1.0f);
         MixAudioFileData dubbing1 = new MixAudioFileData();
         dubbing1.setFilePath(Environment.getExternalStorageDirectory().getPath() + "/123.wav");
@@ -72,31 +72,21 @@ public class MainActivity extends AppCompatActivity {
 
     public void run() {
         String base = Environment.getExternalStorageDirectory().getPath();
-        Log.e("MainActivity", base);
-        File file = new File(Environment.getExternalStorageDirectory().getPath() + "/123.mp4");
-        if (!file.exists()) {
-            return;
-        }
+        FFmpegHelper.getInstance().extractVideo(base + "/test1.mp4", base + "/FFmpegTest.mp4", new OnFFmpegListener() {
+            @Override
+            public void onStart() {
 
-        String[] commands = {
-                "ffmpeg",
-                "-ss",
-                "2.0",
-                "-i",
-                base + "/123.mp4",
-                "-t",
-                "2.0",
-                "-y",
-                base + "/ffmpegTest.mp4"
-        };
-        int result = FFmpegHelper.run(commands);
-        if (result == 0) {
-            Toast.makeText(MainActivity.this, "命令行执行完成", Toast.LENGTH_SHORT).show();
-        } else {
-            Log.e("MainActivity", "result = " + result);
-        }
+            }
 
-//        ffmpeg -ss 4.0 -i e:\tools\1561.mp4 -t 2.0 -y e:\tools\cut.mp4
+            @Override
+            public void onSuccess() {
 
+            }
+
+            @Override
+            public void onFail(int ret) {
+
+            }
+        });
     }
 }
