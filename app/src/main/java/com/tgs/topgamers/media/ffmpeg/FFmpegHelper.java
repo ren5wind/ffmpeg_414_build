@@ -3,6 +3,10 @@ package com.tgs.topgamers.media.ffmpeg;
 import android.os.Environment;
 import android.util.Log;
 
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -111,8 +115,8 @@ public class FFmpegHelper {
 
 
     public void videoMixAudioChannels(MixAudioFileData srcVideo, String desVideoPath, List<MixAudioFileData> dubbingAudioList,
-                                      float dubbingVolume, MixAudioFileData backgroundAudio, OnFFmpegListener listener) {
-        String dubbingFilePath = Environment.getExternalStorageDirectory().getPath() + "/ATopGame/dubbingAudio.wav";
+                                      float dubbingVolume, MixAudioFileData backgroundAudio, MixAudioFileData templateAudio, OnFFmpegListener listener) {
+        String dubbingFilePath = Environment.getExternalStorageDirectory().getPath() + "/ATopGame/temps/dubbingAudio.wav";
         boolean isDubbingChannel = false;
         List<String[]> cmdList = new ArrayList<>();
 
@@ -192,40 +196,64 @@ public class FFmpegHelper {
             cmds.add("-i");
             cmds.add(backgroundAudio.getFilePath());
         }
+        if (templateAudio != null) {
+            cmds.add("-i");
+            cmds.add(templateAudio.getFilePath());
+        }
         cmds.add("-filter_complex");
         String complex = "";
+        int channelIndex = 0;
         //源文件声音滤镜
-        complex += "[0:a]aformat=sample_fmts=fltp:sample_rates=44100:channel_layouts=stereo,volume=" + srcVideo.getVolume() + "[a0];";
+        complex += "[" + channelIndex + ":a]aformat=sample_fmts=fltp:sample_rates=44100:channel_layouts=stereo,volume=" + srcVideo.getVolume() + "[a0];";
         //配音声音滤镜
         if (isDubbingChannel) {
-            complex += "[1:a]aformat=sample_fmts=fltp:sample_rates=44100:channel_layouts=stereo,volume=" + dubbingVolume * 2.0f + "[a1];";
+            channelIndex = 1;
+            complex += "[" + channelIndex + ":a]aformat=sample_fmts=fltp:sample_rates=44100:channel_layouts=stereo,volume=" + dubbingVolume * 2.0f + "[a1];";
         }
         //背景音乐声音滤镜
         if (backgroundAudio != null) {
-            int channel;
-            if (!isDubbingChannel) {
-                channel = 1;
+            if (channelIndex == 0) {
+                channelIndex = 1;
             } else {
-                channel = 2;
+                channelIndex = 2;
             }
-            complex += "[" + channel + ":a]aformat=sample_fmts=fltp:sample_rates=44100:channel_layouts=stereo,volume=" + backgroundAudio.getVolume() + "[a" + channel + "];";
+            complex += "[" + channelIndex + ":a]aformat=sample_fmts=fltp:sample_rates=44100:channel_layouts=stereo,volume=" + backgroundAudio.getVolume() + "[a" + channelIndex + "];";
+        }
+
+        //模板音乐声音滤镜
+        if (templateAudio != null) {
+            if (channelIndex == 0) {
+                channelIndex = 1;
+            } else if (channelIndex == 1) {
+                channelIndex = 2;
+            } else {
+                channelIndex = 3;
+            }
+            complex += "[" + channelIndex + ":a]aformat=sample_fmts=fltp:sample_rates=44100:channel_layouts=stereo,volume=" + templateAudio.getVolume() + "[a" + channelIndex + "];";
         }
 
         int inputs = 0;
-        complex += "[a0]";
-        inputs++;
-        if (isDubbingChannel) {
-            complex += "[a1]";
+//        complex += "[a0]";
+//        inputs++;
+//        if (isDubbingChannel) {
+//            complex += "[a1]";
+//            inputs++;
+//        }
+//        if (backgroundAudio != null) {
+//            if (!isDubbingChannel) {
+//                complex += "[a1]";
+//            } else {
+//                complex += "[a2]";
+//            }
+//            inputs++;
+//        }
+
+        for (int i = 0; i <= channelIndex; i++) {
+            complex += "[a" + i + "]";
             inputs++;
         }
-        if (backgroundAudio != null) {
-            if (!isDubbingChannel) {
-                complex += "[a1]";
-            } else {
-                complex += "[a2]";
-            }
-            inputs++;
-        }
+
+
 //        amerge=inputs=2
         complex += "amix=inputs=" + inputs + ":duration=first:dropout_transition=2";
 //        complex += "amerge=inputs=" + inputs;
@@ -276,7 +304,7 @@ public class FFmpegHelper {
      */
     public void extractVideo(String inputPath, String outputPath, OnFFmpegListener listener) {
         List<String[]> cmdList = new ArrayList<>();
-        String tempFilePath = Environment.getExternalStorageDirectory().getPath() + "/ATopGame/temp_extractVideo.mp4";
+        String tempFilePath = Environment.getExternalStorageDirectory().getPath() + "/ATopGame/temps/temp_extractVideo.mp4";
 
         String[] cmd1 = {
                 "ffmpeg",
@@ -291,8 +319,6 @@ public class FFmpegHelper {
         cmdList.add(cmd1);
 
 //        ffmpeg -i path -f lavfi -i anullsrc=channel_layout=stereo:sample_rate=44100 -c:v copy -shortest -y path
-
-
 
         String[] cmd2 = {
                 "ffmpeg",
@@ -311,6 +337,127 @@ public class FFmpegHelper {
         cmdList.add(cmd2);
         mFFmpegExecuteAsyncTask = new FFmpegExecuteAsyncTask(cmdList, listener);
         mFFmpegExecuteAsyncTask.execute();
+    }
+
+
+    public void insterAudios(String srcAudioPath, List<MixAudioFileData> insterAudioFileList, String desPath, OnFFmpegListener listener) {
+        //ffmpeg -i input.mp3 -acodec libfaac output.aac
+        String tempFilePath = Environment.getExternalStorageDirectory().getPath() + "/ATopGame/temps/temp_insterAudio_src.aac";
+        List<String[]> cmdList = new ArrayList<>();
+
+        //mp3转aac
+        String[] cmd1 = {
+                "ffmpeg",
+                "-i",
+                srcAudioPath,
+                "-acodec",
+                "aac",
+                tempFilePath
+        };
+        cmdList.add(cmd1);
+        //根据insterAudioFileList来分割srcAudio
+        List<String> cmd2 = new ArrayList<>();
+        List<String> clipAudioPathList = new ArrayList<>();
+        float currentClipTimeMs = 0;
+        for (int i = 0, size = insterAudioFileList.size(); i < size + 1; i++) {
+            cmd2.clear();
+            String path = Environment.getExternalStorageDirectory().getPath() + "/ATopGame/temps/temp_insterAudio_clip" + i + ".aac";
+
+            MixAudioFileData data = (i < size) ? insterAudioFileList.get(i) : null;
+
+            float startTime = 0;
+            float duration = 0;
+            if (data == null) {
+                startTime = currentClipTimeMs / 1000f;
+                duration = 0;
+            } else {
+                startTime = currentClipTimeMs / 1000f;
+                duration = ((float) data.getStartTimeMs() - currentClipTimeMs) / 1000f;
+                currentClipTimeMs = data.getStartTimeMs();
+            }
+            if ((data != null && data.getStartTimeMs() != 0) || i == size) {
+                cmd2.add("ffmpeg");
+                cmd2.add("-ss");
+                cmd2.add(String.valueOf(startTime));
+                cmd2.add("-i");
+                cmd2.add(srcAudioPath);
+                if (duration > 0) {
+                    cmd2.add("-t");
+                    cmd2.add(String.valueOf(duration));
+                }
+                cmd2.add("-y");
+                cmd2.add(path);
+                clipAudioPathList.add(path);
+            }
+            if (data != null) {
+                clipAudioPathList.add(data.getFilePath());
+            }
+            if (cmd2.size() != 0) {
+                String[] commands = cmd2.toArray(new String[cmd2.size()]);
+                cmdList.add(commands);
+            }
+        }
+
+
+        //合并分割后的文件
+        File tempFile = new File(Environment.getExternalStorageDirectory().toString() + "/ATopGame/temps/concatMedia.txt");
+        tempFile.delete();
+        FileWriter writer = null;
+        BufferedWriter bw = null;
+        try {
+            writer = new FileWriter(tempFile);
+            bw = new BufferedWriter(writer);
+            for (int i = 0, size = clipAudioPathList.size(); i < size; i++) {
+                if (i == clipAudioPathList.size() - 1) {
+                    bw.write("file " + "'" + clipAudioPathList.get(i) + "'");
+                } else {
+                    bw.write("file " + "'" + clipAudioPathList.get(i) + "'" + "\r\n");
+                }
+            }
+            bw.flush();
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            if (writer != null) {
+                try {
+                    writer.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+            if (bw != null) {
+                try {
+                    bw.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+
+        ArrayList<String> cmd4 = new ArrayList<>();
+        cmd4.add("ffmpeg");
+        cmd4.add("-f");
+        cmd4.add("concat");
+        cmd4.add("-safe");
+        cmd4.add("0");
+        cmd4.add("-i");
+        cmd4.add(tempFile.getPath());
+//        cmd3.add("-absf");
+//        cmd3.add("aac_adtstoasc");
+//        cmd3.add("-movflags");
+//        cmd3.add("faststart");
+        cmd4.add("-c");
+        cmd4.add("copy");
+        cmd4.add(desPath);
+        String[] cmds3 = cmd4.toArray(new String[cmd2.size()]);
+        cmdList.add(cmds3);
+
+        mFFmpegExecuteAsyncTask = new FFmpegExecuteAsyncTask(cmdList, listener);
+        mFFmpegExecuteAsyncTask.execute();
+    }
+
+    public void concatMedia(String srcAudioPath, List<String> insterAudioPathList, String desPath, OnFFmpegListener listener) {
+
     }
 
 

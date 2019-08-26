@@ -21,7 +21,7 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
 
-        run();
+        test();
     }
 
     private void test() {
@@ -31,11 +31,11 @@ public class MainActivity extends AppCompatActivity {
         List<MixAudioFileData> dubbingList = new ArrayList<>();
         src.setFilePath(Environment.getExternalStorageDirectory().getPath() + "/test1.mp4");
         src.setVolume(1.0f);
-        MixAudioFileData dubbing1 = new MixAudioFileData();
-        dubbing1.setFilePath(Environment.getExternalStorageDirectory().getPath() + "/123.wav");
-        dubbing1.setVolume(1.0f);
-        dubbing1.setStartTimeMs(2000);
-        dubbingList.add(dubbing1);
+//        MixAudioFileData dubbing1 = new MixAudioFileData();
+//        dubbing1.setFilePath(Environment.getExternalStorageDirectory().getPath() + "/123.wav");
+//        dubbing1.setVolume(1.0f);
+//        dubbing1.setStartTimeMs(2000);
+//        dubbingList.add(dubbing1);
         MixAudioFileData dubbing2 = new MixAudioFileData();
         dubbing2.setFilePath(Environment.getExternalStorageDirectory().getPath() + "/456.wav");
         dubbing2.setVolume(1.0f);
@@ -51,8 +51,11 @@ public class MainActivity extends AppCompatActivity {
         backgroundAudio.setFilePath(Environment.getExternalStorageDirectory().getPath() + "/16249.mp3");
         backgroundAudio.setVolume(1.0f);
 
+        MixAudioFileData templateAudio = new MixAudioFileData();
+        templateAudio.setVolume(1.0f);
+        templateAudio.setFilePath(Environment.getExternalStorageDirectory().getPath() + "/789.aac");
 
-        FFmpegHelper.getInstance().videoMixAudioChannels(src, desPath, dubbingList, 1.0f, backgroundAudio, new OnFFmpegListener() {
+        FFmpegHelper.getInstance().videoMixAudioChannels(src, desPath, null, 1.0f, null,templateAudio, new OnFFmpegListener() {
             @Override
             public void onStart() {
                 Log.i("MainActivity","onStart");
@@ -71,8 +74,25 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void run() {
+        List<MixAudioFileData> dubbingList = new ArrayList<>();
+//        MixAudioFileData dubbing1 = new MixAudioFileData();
+//        dubbing1.setFilePath(Environment.getExternalStorageDirectory().getPath() + "/456.aac");
+//        dubbing1.setVolume(1.0f);
+//        dubbing1.setStartTimeMs(0);
+//        dubbingList.add(dubbing1);
+//        MixAudioFileData dubbing2 = new MixAudioFileData();
+//        dubbing2.setFilePath(Environment.getExternalStorageDirectory().getPath() + "/456.aac");
+//        dubbing2.setVolume(1.0f);
+//        dubbing2.setStartTimeMs(8000);
+//        dubbingList.add(dubbing2);
+
+        MixAudioFileData dubbing3 = new MixAudioFileData();
+        dubbing3.setFilePath(Environment.getExternalStorageDirectory().getPath() + "/789.aac");
+        dubbing3.setVolume(1.0f);
+        dubbing3.setStartTimeMs(15000);
+        dubbingList.add(dubbing3);
         String base = Environment.getExternalStorageDirectory().getPath();
-        FFmpegHelper.getInstance().extractVideo(base + "/test1.mp4", base + "/FFmpegTest.mp4", new OnFFmpegListener() {
+        FFmpegHelper.getInstance().insterAudios(base + "/16249.mp3", dubbingList,base + "/16249Test.aac", new OnFFmpegListener() {
             @Override
             public void onStart() {
 
