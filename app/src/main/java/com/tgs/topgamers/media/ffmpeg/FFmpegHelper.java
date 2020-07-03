@@ -148,7 +148,7 @@ public class FFmpegHelper {
             long frameCount = 44100 * offDurationMs / 1000;
             int size = dubbingAudioList.size();
 
-            ArrayList<String> cmds = new ArrayList<>();
+              ArrayList<String> cmds = new ArrayList<>();
             cmds.add("ffmpeg");
             for (int i = 0; i < size; i++) {
                 cmds.add("-i");
@@ -461,5 +461,66 @@ public class FFmpegHelper {
     }
 
 
+
+    /**
+     * 分离视频并填充静音帧
+     *
+     * @param inputPath
+     * @param outputPath
+     * @param listener
+     */
+    public void extractVideoByMute(String inputPath, String outputPath, OnFFmpegListener listener) {
+        List<String[]> cmdList = new ArrayList<>();
+        String tempFilePath = Environment.getExternalStorageDirectory().getPath() + "/ATopGame/temps/temp_extractVideo.mp4";
+        createDir(Environment.getExternalStorageDirectory().getPath() + "/ATopGame/temps");
+
+        String[] cmd1 = {
+                "ffmpeg",
+                "-i",
+                inputPath,
+                "-vcodec",
+                "copy",
+                "-an",
+                "-y",
+                tempFilePath
+        };
+        cmdList.add(cmd1);
+
+//        ffmpeg -i path -f lavfi -i anullsrc=channel_layout=stereo:sample_rate=44100 -c:v copy -shortest -y path
+
+
+        String[] cmd2 = {
+                "ffmpeg",
+                "-i",
+                tempFilePath,
+                "-f",
+                "lavfi",
+                "-i",
+                "anullsrc=channel_layout=stereo:sample_rate=44100",
+                "-vcodec",
+                "copy",
+                "-shortest",
+                "-y",
+
+                outputPath
+        };
+        cmdList.add(cmd2);
+        mFFmpegExecuteAsyncTask = new FFmpegExecuteAsyncTask(cmdList, listener);
+        mFFmpegExecuteAsyncTask.execute();
+    }
+
     public native static int run(String[] commands);
+
+    // 创建目录
+    public static boolean createDir(String destDirName) {
+        File dir = new File(destDirName);
+        if (dir.exists()) {// 判断目录是否存在
+            return false;
+        }
+        if (dir.mkdirs()) {// 创建目标目录
+            return true;
+        } else {
+            return false;
+        }
+    }
 }

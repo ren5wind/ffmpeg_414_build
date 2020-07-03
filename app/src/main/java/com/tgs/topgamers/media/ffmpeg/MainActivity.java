@@ -21,7 +21,7 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
 
-        test();
+        run();
     }
 
     private void test() {
@@ -30,7 +30,7 @@ public class MainActivity extends AppCompatActivity {
         String desPath = Environment.getExternalStorageDirectory().getPath() + "/final1.mp4";
         List<MixAudioFileData> dubbingList = new ArrayList<>();
         src.setFilePath(Environment.getExternalStorageDirectory().getPath() + "/test1.mp4");
-        src.setVolume(1.0f);
+        src.setVolume(0.0f);
 //        MixAudioFileData dubbing1 = new MixAudioFileData();
 //        dubbing1.setFilePath(Environment.getExternalStorageDirectory().getPath() + "/123.wav");
 //        dubbing1.setVolume(1.0f);
@@ -55,15 +55,15 @@ public class MainActivity extends AppCompatActivity {
         templateAudio.setVolume(1.0f);
         templateAudio.setFilePath(Environment.getExternalStorageDirectory().getPath() + "/789.aac");
 
-        FFmpegHelper.getInstance().videoMixAudioChannels(src, desPath, null, 1.0f, null,templateAudio, new OnFFmpegListener() {
+        FFmpegHelper.getInstance().videoMixAudioChannels(src, desPath, null, 1.0f, null, null, new OnFFmpegListener() {
             @Override
             public void onStart() {
-                Log.i("MainActivity","onStart");
+                Log.i("MainActivity", "onStart");
             }
 
             @Override
             public void onSuccess() {
-                Log.i("MainActivity","onSuccess");
+                Log.i("MainActivity", "onSuccess");
             }
 
             @Override
@@ -92,7 +92,7 @@ public class MainActivity extends AppCompatActivity {
         dubbing3.setStartTimeMs(15000);
         dubbingList.add(dubbing3);
         String base = Environment.getExternalStorageDirectory().getPath();
-        FFmpegHelper.getInstance().insterAudios(base + "/16249.mp3", dubbingList,base + "/16249Test.aac", new OnFFmpegListener() {
+        FFmpegHelper.getInstance().extractVideoByMute(Environment.getExternalStorageDirectory().getPath() + "/test1.mp4", base + "/testExtract.mp4", new OnFFmpegListener() {
             @Override
             public void onStart() {
 
