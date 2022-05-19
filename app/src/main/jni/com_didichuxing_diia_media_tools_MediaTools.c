@@ -1,8 +1,8 @@
 #include <stdio.h>
-#include "com_huolient_star_commen_ffmpeg_FFmpegHelper.h"
+#include "com_didichuxing_diia_media_tools_MediaTools.h"
 #include "ffmpeg.h"
 
-JNIEXPORT jint JNICALL Java_com_huolient_star_commen_ffmpeg_FFmpegHelper_run
+JNIEXPORT jint JNICALL Java_com_didichuxing_diia_media_tools_MediaTools_run
   (JNIEnv *env, jclass obj, jobjectArray commands){
 int argc = (*env)->GetArrayLength(env, commands);
     char *argv[argc];

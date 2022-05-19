@@ -1,4 +1,4 @@
-package com.huolient.star.commen.ffmpeg;
+package com.didichuxing.diia.media.tools;
 
 import android.media.MediaMetadataRetriever;
 import android.text.TextUtils;

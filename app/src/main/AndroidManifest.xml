@@ -12,7 +12,7 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
 
-        <activity android:name="com.huolient.star.commen.ffmpeg.MainActivity">
+        <activity android:name="com.didichuxing.diia.media.tools.MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 

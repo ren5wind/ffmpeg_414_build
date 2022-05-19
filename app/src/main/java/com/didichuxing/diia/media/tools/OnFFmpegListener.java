@@ -1,4 +1,4 @@
-package com.huolient.star.commen.ffmpeg;
+package com.didichuxing.diia.media.tools;
 
 /**
  * Author      : renxiaoming

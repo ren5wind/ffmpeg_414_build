@@ -1,4 +1,4 @@
-package com.tgs.topgamers;
+package com.huolient.star;
 
 import org.junit.Test;
 

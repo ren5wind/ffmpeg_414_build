@@ -1,4 +1,4 @@
-package com.huolient.star.commen.ffmpeg;
+package com.didichuxing.diia.media.tools;
 
 import android.os.Environment;
 import android.util.Log;
@@ -16,27 +16,27 @@ import java.util.List;
  * Author      : renxiaoming
  * Date        : 2019-08-05
  */
-public class FFmpegHelper {
+public class MediaTools {
 
     static {
         System.loadLibrary("ffmpeg");
         System.loadLibrary("ffmpeginvoke");
     }
 
-    private static FFmpegHelper instance;
+    private static MediaTools instance;
     private FFmpegExecuteAsyncTask mFFmpegExecuteAsyncTask;
 
-    private FFmpegHelper() {
+    private MediaTools() {
     }
 
     /**
      * 单例模式
      */
-    public static FFmpegHelper getInstance() {
+    public static MediaTools getInstance() {
         if (instance == null) {
-            synchronized (FFmpegHelper.class) {
+            synchronized (MediaTools.class) {
                 if (instance == null) {
-                    instance = new FFmpegHelper();
+                    instance = new MediaTools();
                 }
             }
         }

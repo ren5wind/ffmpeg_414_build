@@ -1,4 +1,4 @@
-package com.huolient.star.commen.ffmpeg;
+package com.didichuxing.diia.media.tools;
 
 import android.os.AsyncTask;
 import android.util.Log;
@@ -40,7 +40,7 @@ public class FFmpegExecuteAsyncTask extends AsyncTask<Void, String, Integer> {
     protected Integer doInBackground(Void... params) {
         for (int i = 0; i < mCmds.size(); i++) {
             Log.i("FFmpegExecuteAsyncTask", "cmd = " + mCmds.get(i).toString());
-            int ret = FFmpegHelper.run(mCmds.get(i));
+            int ret = MediaTools.run(mCmds.get(i));
             Log.i("FFmpegExecuteAsyncTask", "ret = " + ret);
             if (ret != 0) {
                 if (mListener != null) {

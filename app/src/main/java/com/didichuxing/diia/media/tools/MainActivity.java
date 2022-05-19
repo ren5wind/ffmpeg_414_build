@@ -1,4 +1,4 @@
-package com.huolient.star.commen.ffmpeg;
+package com.didichuxing.diia.media.tools;
 
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -53,7 +53,7 @@ public class MainActivity extends AppCompatActivity {
         templateAudio.setVolume(1.0f);
         templateAudio.setFilePath(Environment.getExternalStorageDirectory().getPath() + "/789.aac");
 
-        FFmpegHelper.getInstance().videoMixAudioChannels(src, desPath, null, 1.0f, null, null, new OnFFmpegListener() {
+        MediaTools.getInstance().videoMixAudioChannels(src, desPath, null, 1.0f, null, null, new OnFFmpegListener() {
             @Override
             public void onStart() {
                 Log.i("MainActivity", "onStart");
@@ -90,7 +90,7 @@ public class MainActivity extends AppCompatActivity {
         dubbing3.setStartTimeMs(15000);
         dubbingList.add(dubbing3);
         String base = Environment.getExternalStorageDirectory().getPath();
-        FFmpegHelper.getInstance().extractVideoByMute(Environment.getExternalStorageDirectory().getPath() + "/test1.mp4", base + "/testExtract.mp4", new OnFFmpegListener() {
+        MediaTools.getInstance().extractVideoByMute(Environment.getExternalStorageDirectory().getPath() + "/test1.mp4", base + "/testExtract.mp4", new OnFFmpegListener() {
             @Override
             public void onStart() {
 
